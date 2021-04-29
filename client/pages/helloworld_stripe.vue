@@ -1,17 +1,26 @@
 <template>
   <div>
-    <p>hoge</p>
     <div id="card-element"></div>
-    <p>hoge</p>
+    <div style="height:100px"></div>
+    <div id="firebaseui-auth-container"></div>
+    <v-btn @click="signout">sign out</v-btn>
   </div>
 </template>
+
 <script>
+import firebase from "~/plugins/firebase";
+
 export default {
   data() {
     return {};
   },
-  methods: {},
+  methods: {
+    signout() {
+      firebase.auth().signOut();
+    }
+  },
   mounted() {
+    var firebaseui = require("firebaseui");
     const firebaseUI = new firebaseui.auth.AuthUI(firebase.auth());
     const firebaseUiConfig = {
       callbacks: {
@@ -22,14 +31,19 @@ export default {
           return true;
         },
         uiShown: () => {
-          document.getElementById("loader").style.display = "none";
+          //   document.getElementById("loader").style.display = "none";
         }
       },
       signInFlow: "popup",
       signInSuccessUrl: "/",
       signInOptions: [
-        firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-        firebase.auth.EmailAuthProvider.PROVIDER_ID
+        {
+          provider: firebase.auth.GoogleAuthProvider.PROVIDER_ID
+        },
+        {
+          provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+          requireDisplayName: false
+        }
       ],
       credentialHelper: firebaseui.auth.CredentialHelper.NONE,
       // Your terms of service url.
@@ -37,30 +51,35 @@ export default {
       // Your privacy policy url.
       privacyPolicyUrl: "https://example.com/privacy"
     };
-    // firebase.auth().onAuthStateChanged(firebaseUser => {
-    //   if (firebaseUser) {
-    //     currentUser = firebaseUser;
-    //     firebase
-    //       .firestore()
-    //       .collection("stripe_customers")
-    //       .doc(currentUser.uid)
-    //       .onSnapshot(snapshot => {
-    //         if (snapshot.data()) {
-    //           customerData = snapshot.data();
-    //           startDataListeners();
-    //           document.getElementById("loader").style.display = "none";
-    //           document.getElementById("content").style.display = "block";
-    //         } else {
-    //           console.warn(
-    //             `No Stripe customer found in Firestore for user: ${currentUser.uid}`
-    //           );
-    //         }
-    //       });
-    //   } else {
-    //     document.getElementById("content").style.display = "none";
-    //     firebaseUI.start("#firebaseui-auth-container", firebaseUiConfig);
-    //   }
-    // });
+    firebase.auth().onAuthStateChanged(firebaseUser => {
+      if (firebaseUser) {
+        const currentUser = firebaseUser;
+        console.log(currentUser.uid);
+        firebase
+          .firestore()
+          .collection("stripe_customers")
+          .doc(currentUser.uid)
+          .onSnapshot(snapshot => {
+            console.log(snapshot);
+            console.log(snapshot.data());
+            if (snapshot.data()) {
+              console.log("hoge3");
+              let customerData = snapshot.data();
+              //   startDataListeners();
+              //   document.getElementById("loader").style.display = "none";
+              //   document.getElementById("content").style.display = "block";
+            } else {
+              console.log("hoge4");
+              //   console.warn(
+              //     `No Stripe customer found in Firestore for user: ${currentUser.uid}`
+              //   );
+            }
+          });
+      } else {
+        // document.getElementById("content").style.display = "none";
+        firebaseUI.start("#firebaseui-auth-container", firebaseUiConfig);
+      }
+    });
     if (this.$stripe) {
       const stripe = this.$stripe; // stripe is now available!!
       const elements = stripe.elements();

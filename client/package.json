@@ -11,6 +11,7 @@
   "dependencies": {
     "core-js": "^3.9.1",
     "firebase": "^8.4.2",
+    "firebaseui": "^4.8.0",
     "nuxt": "^2.15.3",
     "nuxt-stripe-module": "^3.2.0"
   },

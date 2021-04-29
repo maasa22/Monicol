@@ -14,7 +14,8 @@ export default {
       { hid: 'description', name: 'description', content: '' }
     ],
     link: [
-      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+      { rel: "stylesheet", type:"text/css",  href: "https://www.gstatic.com/firebasejs/ui/4.8.0/firebase-ui-auth.css" } // CDN for firebaseui https://github.com/firebase/firebaseui-web/blob/master/README.md
     ]
   },
 
