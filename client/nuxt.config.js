@@ -37,6 +37,9 @@ export default {
 
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: [
+    ['nuxt-stripe-module', {
+      publishableKey: 'pk_test_51IcVZMJ3dPprh8qo9swzshrx0HLKd1PCYvwLIldzwGWZ84b0NnXusOSG5RsNFh2ajMl8ZRt0vqOSqs5FhQluoTQR00x5pO1z7S',
+    }],
   ],
 
   // Vuetify module configuration: https://go.nuxtjs.dev/config-vuetify

@@ -1532,6 +1532,11 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=
 
+"@stripe/stripe-js@^1.11.0":
+  version "1.14.0"
+  resolved "https://registry.yarnpkg.com/@stripe/stripe-js/-/stripe-js-1.14.0.tgz#0eb8a185197948ab9ddb62ee28ae555e7d90bc72"
+  integrity sha512-Zw4EI+ph8RPxRpIX2uwKKDIbe7WM2OarasPjIPRulU1UCj8lRFqWWW/fTj79lZtnX3FNZkiTRM13UG1UZF7yjQ==
+
 "@types/anymatch@*":
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/@types/anymatch/-/anymatch-1.3.1.tgz#336badc1beecb9dacc38bea2cf32adf627a8421a"
@@ -5380,6 +5385,13 @@ num2fraction@^1.2.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/num2fraction/-/num2fraction-1.2.2.tgz#6f682b6a027a4e9ddfa4564cd2589d1d4e669ede"
   integrity sha1-b2gragJ6Tp3fpFZM0lidHU5mnt4=
+
+nuxt-stripe-module@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/nuxt-stripe-module/-/nuxt-stripe-module-3.2.0.tgz#440d820285fedebb9e89de041825c806cd418c4a"
+  integrity sha512-Ra9Ve0BfUP6OvJ3o/GUfzwMgSPzhYWp7WPK2WE+T4rgXOx1rbjDx8DH3WRMJNPIRNXziLcdez3EeDPQ7LffQDw==
+  dependencies:
+    "@stripe/stripe-js" "^1.11.0"
 
 nuxt@^2.15.3:
   version "2.15.4"

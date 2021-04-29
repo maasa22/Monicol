@@ -11,7 +11,8 @@
   "dependencies": {
     "core-js": "^3.9.1",
     "firebase": "^8.4.2",
-    "nuxt": "^2.15.3"
+    "nuxt": "^2.15.3",
+    "nuxt-stripe-module": "^3.2.0"
   },
   "devDependencies": {
     "@nuxtjs/vuetify": "^1.11.3"

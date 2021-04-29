@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div id="loader">Loading &hellip;</div>
     <p>hoge</p>
     <button @click="addData">add data to firestore</button>
   </div>
