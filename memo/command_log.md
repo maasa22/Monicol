@@ -42,6 +42,11 @@ cd client
 yarn generate
 firebase deploy -- only hosting // change deploy directory in firebase.json
 
+// set up firestore for client
+yarn add firebase
+// access firebase console > プロジェクトの設定 > マイアプリ > ウェブアプリに Firebase を追加
+// create plugins/firebase.js // https://qiita.com/ririli/items/d0d3a6ae78c1b6e827fc
+
 # detail logs
 
 ## nuxt project config
