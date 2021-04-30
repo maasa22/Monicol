@@ -17,15 +17,15 @@
     </details>
     {{ error_message }}
     <hr />
-    <form id="payment-form">
+    <form id="payment-form" @submit.prevent="createPaymentForm">
       <div>
         <label>
           Card:
           <select name="payment-method" required>
             <option
-              id="cardOption.id"
-              value="cardOption.value"
-              text="cardOption.text"
+              :id="cardOption.id"
+              :value="cardOption.value"
+              :text="cardOption.text"
               v-for="cardOption in cardOptions"
               :key="cardOption.index"
             >
@@ -34,6 +34,29 @@
           </select>
         </label>
       </div>
+      <div>
+        <label>
+          Amount:
+          <input
+            name="amount"
+            type="number"
+            min="1"
+            max="99999999"
+            value="100"
+            required
+          />
+        </label>
+        <label>
+          Currency:
+          <select name="currency">
+            <option value="jpy">JPY</option>
+            <option value="usd">USD</option>
+            <option value="eur">EUR</option>
+            <option value="gbp">GBP</option>
+          </select>
+        </label>
+      </div>
+      <button>Charge selected card</button>
     </form>
     <div style="height:100px"></div>
     <div id="firebaseui-auth-container"></div>
@@ -85,30 +108,16 @@ export default {
             }
           }
         );
-        // console.log(setupIntent);
-        // console.log(setupIntent.setupIntent);
-        // console.log(setupIntent.setupIntent.payment_method);
         await firebase
           .firestore()
           .collection("stripe_customers")
           .doc(this.currentUser.uid)
           .collection("payment_methods")
-          //.add({ id: setupIntent.payment_method });
           .add({ id: setupIntent.setupIntent.payment_method });
       } catch (err) {
-        alert(err);
+        alert(err); // replace alert into "this.error_message=xxx"
       }
-      //   setupIntent().catch(e => {
-      //     console.log("error");
-      //   });
-      // .catch(error => {
-      //   console.log("error");
-      //   console.log(error);
-      //   this.error_message = error.message;
-      //   return;
-      // }); // should catch error
     },
-
     // listen する系は、computed とかなのかも知れぬ... async とかを入れると良いのかも？
     /**
      * Set up Firestore data listeners
@@ -152,11 +161,56 @@ export default {
         });
       return cardOptions;
     },
+    // Create payment form
+    async createPaymentForm(event) {
+      const form = new FormData(event.target);
+      const amount = Number(form.get("amount"));
+      const currency = form.get("currency");
+      const data = {
+        payment_method: form.get("payment-method"),
+        currency,
+        amount: this.formatAmountForStripe(amount, currency),
+        status: "new"
+      };
+
+      await firebase
+        .firestore()
+        .collection("stripe_customers")
+        .doc(this.currentUser.uid)
+        .collection("payments")
+        .add(data);
+    },
     signout() {
       firebase.auth().signOut();
+    },
+    // Format amount for Stripe
+    formatAmountForStripe(amount, currency) {
+      return this.zeroDecimalCurrency(amount, currency)
+        ? amount
+        : Math.round(amount * 100);
+    },
+    // Check if we have a zero decimal currency
+    // https://stripe.com/docs/currencies#zero-decimal
+    zeroDecimalCurrency(amount, currency) {
+      let numberFormat = new Intl.NumberFormat(["en-US"], {
+        style: "currency",
+        currency: currency,
+        currencyDisplay: "symbol"
+      });
+      const parts = numberFormat.formatToParts(amount);
+      let zeroDecimalCurrency = true;
+      for (let part of parts) {
+        if (part.type === "decimal") {
+          zeroDecimalCurrency = false;
+        }
+      }
+      return zeroDecimalCurrency;
     }
   },
   mounted() {
+    /**
+     * Firebase auth configuration
+     */
     var firebaseui = require("firebaseui");
     const firebaseUI = new firebaseui.auth.AuthUI(firebase.auth());
     const firebaseUiConfig = {
@@ -192,23 +246,13 @@ export default {
       if (firebaseUser) {
         const currentUser = firebaseUser;
         this.currentUser = currentUser;
-        console.log(currentUser.uid);
-        // console.log(
-        //   firebase
-        //     .firestore()
-        //     .collection("stripe_customers")
-        //     .doc(currentUser.uid)
-        // );
         firebase
           .firestore()
           .collection("stripe_customers")
           .doc(currentUser.uid)
           .onSnapshot(snapshot => {
-            // console.log(snapshot);
-            // console.log(snapshot.data());
             if (snapshot.data()) {
               this.customerData = snapshot.data();
-              //   console.log("cusomerData-------------------", this.customerData);
               this.cardOptions = this.startDataListeners();
               //   document.getElementById("loader").style.display = "none";
               //   document.getElementById("content").style.display = "block";
@@ -223,6 +267,9 @@ export default {
         firebaseUI.start("#firebaseui-auth-container", firebaseUiConfig);
       }
     });
+    /**
+     * Set up Stripe Elements
+     */
     // show card-element
     if (this.$stripe) {
       const stripe = this.$stripe; // stripe is now available!!

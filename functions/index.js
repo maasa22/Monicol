@@ -66,6 +66,44 @@ exports.addPaymentMethodDetails = functions.firestore
   });
 
 
+// [START chargecustomer]
+
+exports.createStripePayment = functions.firestore
+  .document('stripe_customers/{userId}/payments/{pushId}')
+  .onCreate(async (snap, context) => {
+    const { amount, currency, payment_method } = snap.data();
+    try {
+      // Look up the Stripe customer id.
+      const customer = (await snap.ref.parent.parent.get()).data().customer_id;
+      // Create a charge using the pushId as the idempotency key
+      // to protect against double charges.
+      const idempotencyKey = context.params.pushId;
+      const payment = await stripe.paymentIntents.create(
+        {
+          amount,
+          currency,
+          customer,
+          payment_method,
+          off_session: false,
+          confirm: true,
+          confirmation_method: 'manual',
+        },
+        { idempotencyKey }
+      );
+      // If the result is successful, write it back to the database.
+      await snap.ref.set(payment);
+    } catch (error) {
+      // We want to capture errors and render them in a user-friendly way, while
+      // still logging an exception with StackDriver
+      functions.logger.log(error);
+      await snap.ref.set({ error: userFacingMessage(error) }, { merge: true });
+      await reportError(error, { user: context.params.userId });
+    }
+  });
+
+// [END chargecustomer]
+
+
 // const functions = require("firebase-functions");
 
 // // Create and Deploy Your First Cloud Functions
