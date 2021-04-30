@@ -15,6 +15,7 @@
         <p><input type="submit" value="submit" /></p>
       </form>
     </details>
+    {{ error_message }}
     <hr />
     <form id="payment-form">
       <div>
@@ -50,6 +51,7 @@ export default {
       customerData: {},
       currentUser: {},
       cardElement: "",
+      error_message: "",
       test_cards: [
         4242424242424242,
         5555555555554444,
@@ -71,27 +73,40 @@ export default {
       console.log(this.customerData.setup_secret);
       console.log(this.cardElement);
       console.log(cardholderName);
-      const setupIntent = await this.$stripe.confirmCardSetup(
-        this.customerData.setup_secret,
-        {
-          payment_method: {
-            card: this.cardElement,
-            billing_details: {
-              name: cardholderName
+      try {
+        const setupIntent = await this.$stripe.confirmCardSetup(
+          this.customerData.setup_secret,
+          {
+            payment_method: {
+              card: this.cardElement,
+              billing_details: {
+                name: cardholderName
+              }
             }
           }
-        }
-      ); // should catch error
-      console.log(setupIntent);
-      console.log(setupIntent.setupIntent);
-      console.log(setupIntent.setupIntent.payment_method);
-      await firebase
-        .firestore()
-        .collection("stripe_customers")
-        .doc(this.currentUser.uid)
-        .collection("payment_methods")
-        //.add({ id: setupIntent.payment_method });
-        .add({ id: setupIntent.setupIntent.payment_method });
+        );
+        // console.log(setupIntent);
+        // console.log(setupIntent.setupIntent);
+        // console.log(setupIntent.setupIntent.payment_method);
+        await firebase
+          .firestore()
+          .collection("stripe_customers")
+          .doc(this.currentUser.uid)
+          .collection("payment_methods")
+          //.add({ id: setupIntent.payment_method });
+          .add({ id: setupIntent.setupIntent.payment_method });
+      } catch (err) {
+        alert(err);
+      }
+      //   setupIntent().catch(e => {
+      //     console.log("error");
+      //   });
+      // .catch(error => {
+      //   console.log("error");
+      //   console.log(error);
+      //   this.error_message = error.message;
+      //   return;
+      // }); // should catch error
     },
 
     // listen する系は、computed とかなのかも知れぬ... async とかを入れると良いのかも？
@@ -121,13 +136,11 @@ export default {
             }
 
             // this がここで効かなくなる...
-            // console.log(this.cardOptions);
-            // console.log(this.currentUser);
+            // Add a new option if one doesn't exist yet.
             const targetList = cardOptions.filter(cardOption => {
               return cardOption.id === `card-${doc.id}`;
             });
-            console.log(targetList);
-            console.log(targetList.length === 0);
+
             if (targetList.length === 0) {
               cardOptions.push({
                 id: `card-${doc.id}`,
@@ -135,22 +148,6 @@ export default {
                 text: `${paymentMethod.card.brand} •••• ${paymentMethod.card.last4} | Expires ${paymentMethod.card.exp_month}/${paymentMethod.card.exp_year}`
               });
             }
-
-            // const optionId = `card-${doc.id}`;
-            // let optionElement = document.getElementById(optionId);
-            // console.log(optionId);
-
-            // // Add a new option if one doesn't exist yet.
-            // if (!optionElement) {
-            //   optionElement = document.createElement("option");
-            //   optionElement.id = optionId;
-            //   document
-            //     .querySelector("select[name=payment-method]")
-            //     .appendChild(optionElement);
-            // }
-
-            // optionElement.value = paymentMethod.id;
-            // optionElement.text = `${paymentMethod.card.brand} •••• ${paymentMethod.card.last4} | Expires ${paymentMethod.card.exp_month}/${paymentMethod.card.exp_year}`;
           });
         });
       return cardOptions;
