@@ -16,6 +16,24 @@
       </form>
     </details>
     <hr />
+    <form id="payment-form">
+      <div>
+        <label>
+          Card:
+          <select name="payment-method" required>
+            <option
+              id="cardOption.id"
+              value="cardOption.value"
+              text="cardOption.text"
+              v-for="cardOption in cardOptions"
+              :key="cardOption.index"
+            >
+              {{ cardOption.text }}
+            </option>
+          </select>
+        </label>
+      </div>
+    </form>
     <div style="height:100px"></div>
     <div id="firebaseui-auth-container"></div>
     <v-btn @click="signout">sign out</v-btn>
@@ -37,7 +55,8 @@ export default {
         5555555555554444,
         2223003122003222,
         4000056655665556
-      ]
+      ],
+      cardOptions: []
     };
   },
   methods: {
@@ -63,8 +82,6 @@ export default {
           }
         }
       ); // should catch error
-      // firebase auth, forestore, stripe 顧客 全削除して、新メールアドレスでログイン、1つ目の支払い追加は上手くいく模様...
-      // server 側も作ってからエラー処理しても良いかも？
       console.log(setupIntent);
       console.log(setupIntent.setupIntent);
       console.log(setupIntent.setupIntent.payment_method);
@@ -75,6 +92,62 @@ export default {
         .collection("payment_methods")
         //.add({ id: setupIntent.payment_method });
         .add({ id: setupIntent.setupIntent.payment_method });
+    },
+
+    // listen する系は、computed とかなのかも知れぬ... async とかを入れると良いのかも？
+    /**
+     * Set up Firestore data listeners
+     */
+    startDataListeners() {
+      /**
+       * Get all payment methods for the logged in customer
+       */
+      let cardOptions = [];
+      console.log(this.currentUser);
+      console.log(this.cardOptions);
+      firebase
+        .firestore()
+        .collection("stripe_customers")
+        .doc(this.currentUser.uid)
+        .collection("payment_methods")
+        .onSnapshot(snapshot => {
+          if (snapshot.empty) {
+            // document.querySelector("#add-new-card").open = true;
+          }
+          snapshot.forEach(function(doc) {
+            const paymentMethod = doc.data();
+            if (!paymentMethod.card) {
+              return;
+            }
+
+            // this がここで効かなくなる...
+            // console.log(this.cardOptions);
+            // console.log(this.currentUser);
+
+            cardOptions.push({
+              id: `card-${doc.id}`,
+              value: paymentMethod.id,
+              text: `${paymentMethod.card.brand} •••• ${paymentMethod.card.last4} | Expires ${paymentMethod.card.exp_month}/${paymentMethod.card.exp_year}`
+            });
+
+            // const optionId = `card-${doc.id}`;
+            // let optionElement = document.getElementById(optionId);
+            // console.log(optionId);
+
+            // // Add a new option if one doesn't exist yet.
+            // if (!optionElement) {
+            //   optionElement = document.createElement("option");
+            //   optionElement.id = optionId;
+            //   document
+            //     .querySelector("select[name=payment-method]")
+            //     .appendChild(optionElement);
+            // }
+
+            // optionElement.value = paymentMethod.id;
+            // optionElement.text = `${paymentMethod.card.brand} •••• ${paymentMethod.card.last4} | Expires ${paymentMethod.card.exp_month}/${paymentMethod.card.exp_year}`;
+          });
+        });
+      return cardOptions;
     },
     signout() {
       firebase.auth().signOut();
@@ -133,7 +206,7 @@ export default {
             if (snapshot.data()) {
               this.customerData = snapshot.data();
               //   console.log("cusomerData-------------------", this.customerData);
-              //   startDataListeners();
+              this.cardOptions = this.startDataListeners();
               //   document.getElementById("loader").style.display = "none";
               //   document.getElementById("content").style.display = "block";
             } else {
