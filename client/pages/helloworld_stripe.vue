@@ -123,12 +123,18 @@ export default {
             // this がここで効かなくなる...
             // console.log(this.cardOptions);
             // console.log(this.currentUser);
-
-            cardOptions.push({
-              id: `card-${doc.id}`,
-              value: paymentMethod.id,
-              text: `${paymentMethod.card.brand} •••• ${paymentMethod.card.last4} | Expires ${paymentMethod.card.exp_month}/${paymentMethod.card.exp_year}`
+            const targetList = cardOptions.filter(cardOption => {
+              return cardOption.id === `card-${doc.id}`;
             });
+            console.log(targetList);
+            console.log(targetList.length === 0);
+            if (targetList.length === 0) {
+              cardOptions.push({
+                id: `card-${doc.id}`,
+                value: paymentMethod.id,
+                text: `${paymentMethod.card.brand} •••• ${paymentMethod.card.last4} | Expires ${paymentMethod.card.exp_month}/${paymentMethod.card.exp_year}`
+              });
+            }
 
             // const optionId = `card-${doc.id}`;
             // let optionElement = document.getElementById(optionId);
