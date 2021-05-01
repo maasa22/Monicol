@@ -56,7 +56,7 @@
           </select>
         </label>
       </div>
-      <button>Charge selected card</button>
+      <v-btn>Charge selected card</v-btn>
     </form>
     <div style="height:100px"></div>
     <div id="firebaseui-auth-container"></div>

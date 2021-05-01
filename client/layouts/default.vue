@@ -74,13 +74,8 @@ export default {
       items: [
         {
           icon: "mdi-apps",
-          title: "Welcome",
-          to: "/"
-        },
-        {
-          icon: "mdi-chart-bubble",
-          title: "Inspire",
-          to: "/inspire"
+          title: "予約",
+          to: "/list"
         },
         {
           icon: "mdi-chart-bubble",
