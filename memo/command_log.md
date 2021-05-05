@@ -61,6 +61,12 @@ cd functions
 yarn add @google-cloud/logging
 yarn add stripe
 
+// have access from python
+// firebase console > プロジェクトの設定 > サービスアカウント > 新しい秘密鍵の生成
+pipenv shell
+pipenv install firebase_admin
+pipenv install
+
 # detail logs
 
 ## nuxt project config
