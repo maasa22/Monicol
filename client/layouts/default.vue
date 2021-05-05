@@ -63,7 +63,7 @@ export default {
         {
           icon: "mdi-apps",
           title: "予約",
-          to: "/list"
+          to: "/time"
         },
         {
           icon: "mdi-chart-bubble",
