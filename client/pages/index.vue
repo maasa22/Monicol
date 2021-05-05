@@ -2,7 +2,7 @@
 <script>
 export default {
   mounted: function() {
-    this.$router.push("/list");
+    this.$router.push("/time");
   }
 };
 </script>
