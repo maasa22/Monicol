@@ -13,29 +13,83 @@
         <p>2021/05/06</p>
         <p>08:20</p>
       </div>
-      <h3>支払い方法の選択</h3>
-      <details id="add-new-card">
-        <summary>支払い方法の追加</summary>
-        <form id="payment-method-form" @submit.prevent="addNewCard">
-          <label>
-            カード名義
-            <input
-              type="text"
-              name="cardholderName"
-              required
-              v-model="cardholderName"
-            />
-          </label>
-          <fieldset>
-            <div id="card-element"></div>
-          </fieldset>
-          <div id="error-message" role="alert"></div>
-          <p><input type="submit" value="追加" /></p>
+      <div>
+        <h3>支払い</h3>
+        <form id="payment-form" @submit.prevent="createPaymentForm">
+          <div class="payment-card">
+            <label>
+              支払い方法:
+              <select name="payment-method" required>
+                <option
+                  v-for="cardOption in cardOptions"
+                  :key="cardOption.index"
+                  :id="cardOption.id"
+                  :value="cardOption.value"
+                  :text="cardOption.text"
+                >
+                  {{ cardOption.text }}
+                </option>
+              </select>
+              <!-- <v-select
+                :items="cardOptions"
+                item-text="text"
+                item-value="value"
+                required
+              ></v-select> -->
+            </label>
+          </div>
+          <div>150円</div>
+          <!-- <div>
+            <label>
+              金額:
+              <input
+                name="amount"
+                type="number"
+                min="1"
+                max="99999999"
+                value="100"
+                required
+              />
+            </label>
+            <label>
+              Currency:
+              <select name="currency">
+                <option value="jpy">JPY</option>
+                <option value="usd">USD</option>
+                <option value="eur">EUR</option>
+                <option value="gbp">GBP</option>
+              </select>
+            </label>
+          </div> -->
+          <!-- <v-btn color="primary">支払う</v-btn> -->
+          <input type="submit" value="支払う" />
         </form>
-      </details>
-      {{ error_message }}
-
-      <v-btn color="primary">支払う</v-btn>
+        <details id="add-new-card" :open="isShowingCard">
+          <summary>支払い方法の追加</summary>
+          <form id="payment-method-form" @submit.prevent="addNewCard">
+            <label>
+              カード名義
+              <input
+                type="text"
+                name="cardholderName"
+                required
+                v-model="cardholderName"
+              />
+            </label>
+            <fieldset>
+              <div id="card-element"></div>
+            </fieldset>
+            <div id="error-message" role="alert">{{ error_message }}</div>
+            <p><input type="submit" value="追加" /></p>
+          </form>
+        </details>
+      </div>
+      <div>
+        <h3>支払い履歴</h3>
+        <ul id="payments-list" v-for="payment in payments" :key="payment.index">
+          <li>{{ payment.amount }}円支払いました</li>
+        </ul>
+      </div>
     </section>
   </div>
 </template>
@@ -47,14 +101,16 @@ export default {
   data() {
     return {
       currentUser: null, // loing user info
+      customerData: {},
       cardOptions: [],
+      payments: [],
       cardholderName: null,
       error_message: "",
-      loaded: false
+      loaded: false,
+      isShowingCard: false
     };
   },
   methods: {
-    // 書き直せばわんちゃん直るかな...？ form もあんまり使ったことないし。 コピペミスもありえるし。
     async addNewCard(event) {
       if (!event.target.reportValidity()) {
         return;
@@ -91,13 +147,13 @@ export default {
     /**
      * Set up Firestore data listeners
      */
-    startDataListeners() {
+    getAllPaymentMethods() {
       /**
        * Get all payment methods for the logged in customer
        */
       let cardOptions = [];
-      console.log(this.currentUser);
-      console.log(this.cardOptions);
+      //   console.log(this.currentUser);
+      //   console.log(this.cardOptions);
       firebase
         .firestore()
         .collection("stripe_customers")
@@ -105,7 +161,7 @@ export default {
         .collection("payment_methods")
         .onSnapshot(snapshot => {
           if (snapshot.empty) {
-            // document.querySelector("#add-new-card").open = true;
+            this.isShowingCard = true;
           }
           snapshot.forEach(function(doc) {
             const paymentMethod = doc.data();
@@ -130,18 +186,95 @@ export default {
         });
       return cardOptions;
     },
+    getAllPayments() {
+      /**
+       * Get all payments for the logged in customer
+       */
+      // need to modify
+      let payments = [];
+      firebase
+        .firestore()
+        .collection("stripe_customers")
+        .doc(this.currentUser.uid)
+        .collection("payments")
+        .onSnapshot(snapshot => {
+          snapshot.forEach(doc => {
+            const payment = doc.data();
+
+            const targetList = payments.filter(payment => {
+              return payment.id === `payment-${doc.id}`;
+            });
+
+            let content = "";
+            if (
+              payment.status === "new" ||
+              payment.status === "requires_confirmation"
+            ) {
+              content = `Creating Payment for ${this.formatAmount(
+                payment.amount,
+                payment.currency
+              )}`;
+            } else if (payment.status === "succeeded") {
+              const card = payment.charges.data[0].payment_method_details.card;
+              content = `✅ Payment for ${this.formatAmount(
+                payment.amount,
+                payment.currency
+              )} on ${card.brand} card •••• ${card.last4}.`;
+            } else if (payment.status === "requires_action") {
+              content = `🚨 Payment for ${this.formatAmount(
+                payment.amount,
+                payment.currency
+              )} ${payment.status}`;
+              this.handleCardAction(payment, doc.id);
+            } else {
+              content = `⚠️ Payment for ${this.formatAmount(
+                payment.amount,
+                payment.currency
+              )} ${payment.status}`;
+            }
+
+            if (targetList.length === 0) {
+              payments.push(payment);
+            }
+          });
+        });
+      return payments;
+    },
+    // Handle card actions like 3D Secure
+    async handleCardAction(payment, docId) {
+      const { error, paymentIntent } = await stripe.handleCardAction(
+        payment.client_secret
+      );
+      if (error) {
+        alert(error.message);
+        payment = error.payment_intent; // let が必要な気がする？
+      } else if (paymentIntent) {
+        payment = paymentIntent; // let が必要な気がする？
+      }
+
+      await firebase
+        .firestore()
+        .collection("stripe_customers")
+        .doc(this.currentUser.uid)
+        .collection("payments")
+        .doc(docId)
+        .set(payment, { merge: true });
+    },
     // Create payment form
     async createPaymentForm(event) {
+      console.log("hogehoge");
       const form = new FormData(event.target);
-      const amount = Number(form.get("amount"));
-      const currency = form.get("currency");
+      // const amount = Number(form.get("amount"));
+      const amount = 150;
+      // const currency = form.get("currency");
+      const currency = "jpy";
       const data = {
         payment_method: form.get("payment-method"),
         currency,
         amount: this.formatAmountForStripe(amount, currency),
         status: "new"
       };
-
+      console.log(data);
       await firebase
         .firestore()
         .collection("stripe_customers")
@@ -151,6 +284,16 @@ export default {
     },
     signout() {
       firebase.auth().signOut();
+    },
+    // Format amount for diplay in the UI
+    formatAmount(amount, currency) {
+      amount = this.zeroDecimalCurrency(amount, currency)
+        ? amount
+        : (amount / 100).toFixed(2);
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency
+      }).format(amount);
     },
     // Format amount for Stripe
     formatAmountForStripe(amount, currency) {
@@ -183,7 +326,7 @@ export default {
     var firebaseui = require("firebaseui");
     const firebaseUI =
       new firebaseui.auth.AuthUI(firebase.auth()) ||
-      firebaseui.auth.AuthUI.getInstance();
+      firebaseui.auth.AuthUI.getInstance(); // to prevent error
     const firebaseUiConfig = {
       callbacks: {
         signInSuccessWithAuthResult: function(authResult, redirectUrl) {
@@ -209,9 +352,9 @@ export default {
       ],
       credentialHelper: firebaseui.auth.CredentialHelper.NONE,
       // Your terms of service url.
-      tosUrl: "https://example.com/terms",
+      tosUrl: "https://example.com/terms", // to be changed
       // Your privacy policy url.
-      privacyPolicyUrl: "https://example.com/privacy"
+      privacyPolicyUrl: "https://example.com/privacy" // to be changed
     };
     firebase.auth().onAuthStateChanged(firebaseUser => {
       if (firebaseUser) {
@@ -224,7 +367,8 @@ export default {
           .onSnapshot(snapshot => {
             if (snapshot.data()) {
               this.customerData = snapshot.data();
-              this.cardOptions = this.startDataListeners();
+              this.cardOptions = this.getAllPaymentMethods();
+              this.payments = this.getAllPayments();
               this.loaded = true;
               //   document.getElementById("content").style.display = "block";
             } else {
@@ -234,6 +378,7 @@ export default {
             }
           });
       } else {
+        this.loaded = false;
         // document.getElementById("content").style.display = "none";
         firebaseUI.start("#firebaseui-auth-container", firebaseUiConfig);
       }
@@ -250,6 +395,13 @@ export default {
       });
       // Add an instance of the card Element into the `card-element` <div>
       cardElement.mount("#card-element");
+      cardElement.on("change", ({ error }) => {
+        if (error) {
+          this.error_message = error.message;
+        } else {
+          this.error_message = "";
+        }
+      });
       this.cardElement = cardElement;
     }
   }
@@ -258,6 +410,12 @@ export default {
 
 <style scoped>
 .summary {
-  margin: 20px auto;
+  margin: 20px auto 50px;
+}
+#add-new-card {
+  margin: 10px auto 20px;
+}
+.payment-card {
+  margin: 8px auto 8px;
 }
 </style>
