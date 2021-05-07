@@ -61,8 +61,10 @@
               </select>
             </label>
           </div> -->
-          <!-- <v-btn color="primary">支払う</v-btn> -->
-          <input type="submit" value="支払う" />
+          <v-btn type="submit" :disabled="isProcessing" color="primary"
+            >支払う</v-btn
+          >
+          <!-- <input type="submit" value="支払う" /> -->
         </form>
         <details id="add-new-card" :open="isShowingCard">
           <summary>支払い方法の追加</summary>
@@ -80,16 +82,21 @@
               <div id="card-element"></div>
             </fieldset>
             <div id="error-message" role="alert">{{ error_message }}</div>
-            <p><input type="submit" value="追加" /></p>
+            <!-- <p><input type="submit" value="追加" /></p> -->
+            <p>
+              <v-btn type="submit" :disabled="isProcessing" color="primary"
+                >追加</v-btn
+              >
+            </p>
           </form>
         </details>
       </div>
-      <div>
+      <!-- <div>
         <h3>支払い履歴</h3>
         <ul id="payments-list" v-for="payment in payments" :key="payment.index">
           <li>{{ payment.amount }}円支払いました</li>
         </ul>
-      </div>
+      </div> -->
     </section>
   </div>
 </template>
@@ -107,7 +114,8 @@ export default {
       cardholderName: null,
       error_message: "",
       loaded: false,
-      isShowingCard: false
+      isShowingCard: false,
+      isProcessing: false
     };
   },
   methods: {
@@ -115,12 +123,13 @@ export default {
       if (!event.target.reportValidity()) {
         return;
       }
+      this.isProcessing = true;
       const form = new FormData(event.target);
       const cardholderName = form.get("cardholderName");
 
-      console.log(this.customerData.setup_secret);
-      console.log(this.cardElement);
-      console.log(cardholderName);
+      //   console.log(this.customerData.setup_secret);
+      //   console.log(this.cardElement);
+      //   console.log(cardholderName);
       try {
         const setupIntent = await this.$stripe.confirmCardSetup(
           this.customerData.setup_secret,
@@ -141,7 +150,11 @@ export default {
           .add({ id: setupIntent.setupIntent.payment_method });
       } catch (err) {
         alert(err); // replace alert into "this.error_message=xxx"
+        this.isProcessing = false;
+        // return;
       }
+      this.isShowingCard = false;
+      this.isProcessing = false;
     },
     // listen する系は、computed とかなのかも知れぬ... async とかを入れると良いのかも？
     /**
@@ -262,7 +275,7 @@ export default {
     },
     // Create payment form
     async createPaymentForm(event) {
-      console.log("hogehoge");
+      this.isProcessing = true;
       const form = new FormData(event.target);
       // const amount = Number(form.get("amount"));
       const amount = 150;
@@ -274,13 +287,14 @@ export default {
         amount: this.formatAmountForStripe(amount, currency),
         status: "new"
       };
-      console.log(data);
+      //   console.log(data);
       await firebase
         .firestore()
         .collection("stripe_customers")
         .doc(this.currentUser.uid)
         .collection("payments")
         .add(data);
+      this.isProcessing = false;
     },
     signout() {
       firebase.auth().signOut();
@@ -368,7 +382,7 @@ export default {
             if (snapshot.data()) {
               this.customerData = snapshot.data();
               this.cardOptions = this.getAllPaymentMethods();
-              this.payments = this.getAllPayments();
+              //   this.payments = this.getAllPayments();
               this.loaded = true;
               //   document.getElementById("content").style.display = "block";
             } else {
