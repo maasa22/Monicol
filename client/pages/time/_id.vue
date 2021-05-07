@@ -338,9 +338,13 @@ export default {
      * Firebase auth configuration
      */
     var firebaseui = require("firebaseui");
-    const firebaseUI =
-      new firebaseui.auth.AuthUI(firebase.auth()) ||
-      firebaseui.auth.AuthUI.getInstance(); // to prevent error
+    let firebaseUI = firebaseui.auth.AuthUI.getInstance();
+    if (!firebaseUI) {
+      firebaseUI = new firebaseui.auth.AuthUI(firebase.auth());
+    }
+    // let firebaseUI =
+    //   new firebaseui.auth.AuthUI(firebase.auth()) ||
+    //   firebaseui.auth.AuthUI.getInstance(); // to prevent error 'An AuthUI instance already exists for the key "[DEFAULT]"'
     const firebaseUiConfig = {
       callbacks: {
         signInSuccessWithAuthResult: function(authResult, redirectUrl) {
