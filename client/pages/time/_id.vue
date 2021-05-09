@@ -2,23 +2,22 @@
   <div>
     <div class="login_widget">
       <div id="firebaseui-auth-container"></div>
-      <v-btn @click="signout">sign out</v-btn>
+      <!-- <v-btn @click="signout">sign out</v-btn> -->
     </div>
     <div v-show="!loaded">
       Loading &hellip;
     </div>
     <section id="content" v-show="loaded">
       <div class="summary">
-        <h3>予約時間</h3>
-        <p>2021/05/06</p>
-        <p>08:20</p>
+        <h3>ご予約時間</h3>
+        <p>{{ reserved_datetime }} ~ {{ reserved_datetime2 }}</p>
       </div>
       <div>
-        <h3>支払い</h3>
+        <h3>お支払い</h3>
         <form id="payment-form" @submit.prevent="createPaymentForm">
           <div class="payment-card">
             <label>
-              支払い方法:
+              お支払い方法:
               <select name="payment-method" required>
                 <option
                   v-for="cardOption in cardOptions"
@@ -115,7 +114,9 @@ export default {
       error_message: "",
       loaded: false,
       isShowingCard: false,
-      isProcessing: false
+      isProcessing: false,
+      reserved_datetime: null,
+      reserved_datetime2: null
     };
   },
   methods: {
@@ -331,6 +332,25 @@ export default {
         }
       }
       return zeroDecimalCurrency;
+    },
+    formatDateTime(time) {
+      let year = ("0000" + time.getFullYear()).slice(-4);
+      let month = ("00" + String(Number(time.getMonth()) + 1)).slice(-2);
+      let date = ("00" + time.getDate()).slice(-2);
+      let hour = ("00" + time.getHours()).slice(-2);
+      let minute = ("00" + time.getMinutes()).slice(-2);
+      // let formatDate = year + "/" + month + "/" + date + " " + hour + ":" + minute;
+      let formatDate = month + "/" + date + " " + hour + ":" + minute;
+      return formatDate;
+    },
+    formatDateTime2(time) {
+      let year = ("0000" + time.getFullYear()).slice(-4);
+      let month = ("00" + String(Number(time.getMonth()) + 1)).slice(-2);
+      let date = ("00" + time.getDate()).slice(-2);
+      let hour = ("00" + time.getHours()).slice(-2);
+      let minute = ("00" + time.getMinutes()).slice(-2);
+      let formatDate = hour + ":" + minute;
+      return formatDate;
     }
   },
   mounted() {
@@ -422,6 +442,19 @@ export default {
       });
       this.cardElement = cardElement;
     }
+    let reserved_datetime = this.$route.params.id;
+    reserved_datetime = new Date(
+      reserved_datetime.slice(0, 4),
+      reserved_datetime.slice(5, 7) - 1,
+      reserved_datetime.slice(8, 10),
+      reserved_datetime.slice(11, 13),
+      reserved_datetime.slice(14, 16)
+    );
+    this.reserved_datetime = this.formatDateTime(reserved_datetime);
+    let reserved_datetime2 = reserved_datetime.getTime() + 10 * 60 * 1000;
+    this.reserved_datetime2 = this.formatDateTime2(
+      new Date(reserved_datetime2)
+    );
   }
 };
 </script>

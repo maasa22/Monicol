@@ -69,7 +69,7 @@ export default {
   },
   mounted() {
     // 明日以降の予約ができる。 improvement: 前日の21時までにする。
-    for (let i = 1; i < 4; i++) {
+    for (let i = 1; i < 9; i++) {
       let today = new Date();
       let day = new Date();
       day.setDate(today.getDate() + i);

@@ -64,12 +64,12 @@ export default {
           icon: "mdi-apps",
           title: "予約",
           to: "/time"
-        },
-        {
-          icon: "mdi-chart-bubble",
-          title: "Test",
-          to: "/helloworld_stripe"
         }
+        // {
+        //   icon: "mdi-chart-bubble",
+        //   title: "Test",
+        //   to: "/helloworld_stripe"
+        // }
       ],
       miniVariant: false,
       right: true,
