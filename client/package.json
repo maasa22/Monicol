@@ -13,7 +13,8 @@
     "firebase": "^8.4.2",
     "firebaseui": "^4.8.0",
     "nuxt": "^2.15.3",
-    "nuxt-stripe-module": "^3.2.0"
+    "nuxt-stripe-module": "^3.2.0",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@nuxtjs/vuetify": "^1.11.3"

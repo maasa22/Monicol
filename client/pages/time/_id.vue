@@ -102,6 +102,7 @@
 
 <script>
 import firebase from "~/plugins/firebase";
+import { v4 as uuidv4 } from "uuid";
 
 export default {
   data() {
@@ -150,7 +151,8 @@ export default {
           .collection("payment_methods")
           .add({ id: setupIntent.setupIntent.payment_method });
       } catch (err) {
-        alert(err); // replace alert into "this.error_message=xxx"
+        // alert(err); // replace alert into "this.error_message=xxx"
+        alert("カード情報に不備があり、お支払い方法の追加ができませんでした。");
         this.isProcessing = false;
         // return;
       }
@@ -295,6 +297,17 @@ export default {
         .doc(this.currentUser.uid)
         .collection("payments")
         .add(data);
+
+      const data2 = {
+        datetime: this.reserved_datetime,
+        createdAt: new Date()
+      };
+      await firebase
+        .firestore()
+        .collection("reservations")
+        .doc(this.currentUser.uid)
+        .collection("each_reservation")
+        .add(data2);
       this.isProcessing = false;
     },
     signout() {
