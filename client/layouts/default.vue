@@ -62,14 +62,14 @@ export default {
       items: [
         {
           icon: "mdi-apps",
-          title: "予約",
+          title: "予約する",
           to: "/time"
+        },
+        {
+          icon: "mdi-chart-bubble",
+          title: "予約一覧",
+          to: "/reservation"
         }
-        // {
-        //   icon: "mdi-chart-bubble",
-        //   title: "Test",
-        //   to: "/helloworld_stripe"
-        // }
       ],
       miniVariant: false,
       right: true,
