@@ -9,7 +9,14 @@
       Loading &hellip;
     </div>
     <section id="content" v-show="loaded">
-      hogehoge
+      <div
+        v-for="reservation in reservations.slice().reverse()"
+        :key="reservation.id"
+      >
+        <div>
+          <v-btn color="primary"> {{ reservation.datetime }}</v-btn>
+        </div>
+      </div>
     </section>
   </div>
 </template>
@@ -21,10 +28,32 @@ export default {
   data() {
     return {
       currentUser: null, // loing user info
-      loaded: false
+      loaded: false,
+      loadUnit: 20,
+      reservations: []
     };
   },
   methods: {
+    async fetchReservations() {
+      await firebase
+        .firestore()
+        .collection("reservations")
+        .doc(this.currentUser.uid)
+        .collection("each_reservation")
+        .orderBy("datetime", "desc")
+        .limit(this.loadUnit)
+        .get()
+        .then(snapshot => {
+          snapshot.forEach(doc => {
+            let reservation = doc.data();
+            // reservation.reservationId = doc.id;
+            this.reservations.push(reservation);
+          });
+        })
+        .catch(err => {
+          console.log("Error getting documents", err);
+        });
+    },
     signout() {
       firebase.auth().signOut();
     }
@@ -71,6 +100,8 @@ export default {
       if (firebaseUser) {
         const currentUser = firebaseUser;
         this.currentUser = currentUser;
+        this.fetchReservations();
+        this.loaded = true;
       } else {
         this.loaded = false;
         firebaseUI.start("#firebaseui-auth-container", firebaseUiConfig);
