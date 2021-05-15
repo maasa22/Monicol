@@ -9,13 +9,11 @@
       Loading &hellip;
     </div>
     <section id="content" v-show="loaded">
-      <div
-        v-for="reservation in reservations.slice().reverse()"
-        :key="reservation.id"
-      >
-        <div>
-          <v-btn color="primary"> {{ reservation.datetime }}</v-btn>
-        </div>
+      <div>
+        <p>{{ reservation.datetime }}</p>
+        <p>
+          この日時にあなたの電話番号に電話をかけさせていただきます。良い朝をお迎えください。
+        </p>
       </div>
     </section>
   </div>
@@ -30,28 +28,33 @@ export default {
       currentUser: null, // loing user info
       loaded: false,
       loadUnit: 20,
-      reservations: []
+      reservation: {},
+      reservationId: null
     };
   },
   methods: {
-    async fetchReservations() {
+    async fetchReservation(reservationdId) {
+      console.log(reservationdId);
       await firebase
         .firestore()
         .collection("reservations")
         .doc(this.currentUser.uid)
         .collection("each_reservation")
-        .orderBy("datetime", "desc")
-        .limit(this.loadUnit)
+        .doc(reservationdId)
         .get()
-        .then(snapshot => {
-          snapshot.forEach(doc => {
+        .then(doc => {
+          if (doc.exists) {
+            console.log("Document data:", doc.data());
             let reservation = doc.data();
-            // reservation.reservationId = doc.id;
-            this.reservations.push(reservation);
-          });
+            reservation.reservationId = doc.id;
+            this.reservation = reservation;
+          } else {
+            // doc.data() will be undefined in this case
+            console.log("No such document!");
+          }
         })
-        .catch(err => {
-          console.log("Error getting documents", err);
+        .catch(error => {
+          console.log("Error getting document:", error);
         });
     },
     signout() {
@@ -100,7 +103,9 @@ export default {
       if (firebaseUser) {
         const currentUser = firebaseUser;
         this.currentUser = currentUser;
-        this.fetchReservations();
+        let reservationId = this.$route.params.id;
+        this.reservationId = reservationId;
+        this.fetchReservation(reservationId);
         this.loaded = true;
       } else {
         this.loaded = false;
