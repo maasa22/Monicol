@@ -4,25 +4,31 @@
       <div id="firebaseui-auth-container"></div>
       <!-- <v-btn @click="signout">sign out</v-btn> -->
     </div>
-    <h1>予約一覧</h1>
+    <h1>プロフィール</h1>
     <div v-show="!loaded">
       Loading &hellip;
     </div>
     <section id="content" v-show="loaded">
-      <div
-        v-for="reservation in reservations.slice().reverse()"
-        :key="reservation.id"
-      >
-        <div class="each_reservation">
-          <nuxt-link
-            :to="{
-              path: '/reservation/' + reservation.reservationId
-            }"
-          >
-            <v-btn color="primary"> {{ reservation.datetime }}</v-btn>
-          </nuxt-link>
-        </div>
-      </div>
+      <v-container class="grey lighten-5">
+        <v-row>
+          <v-col cols="6" sm="6" md="6" lg="6" xl="6" class="profile_key">
+            ニックネーム
+          </v-col>
+          <v-col cols="6" sm="6" md="6" lg="6" xl="6" class="profile_value">
+            value
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="6" sm="6" md="6" lg="6" xl="6" class="profile_key">
+            電話番号
+          </v-col>
+          <v-col cols="6" sm="6" md="6" lg="6" xl="6" class="profile_value">
+            value
+          </v-col>
+        </v-row>
+      </v-container>
+      <h4>自己紹介</h4>
+      <p>value</p>
     </section>
   </div>
 </template>
@@ -34,32 +40,10 @@ export default {
   data() {
     return {
       currentUser: null, // loing user info
-      loaded: false,
-      loadUnit: 20,
-      reservations: []
+      loaded: false
     };
   },
   methods: {
-    async fetchReservations() {
-      await firebase
-        .firestore()
-        .collection("reservations")
-        .doc(this.currentUser.uid)
-        .collection("each_reservation")
-        .orderBy("datetime", "desc")
-        .limit(this.loadUnit)
-        .get()
-        .then(snapshot => {
-          snapshot.forEach(doc => {
-            let reservation = doc.data();
-            reservation.reservationId = doc.id;
-            this.reservations.push(reservation);
-          });
-        })
-        .catch(err => {
-          console.log("Error getting documents", err);
-        });
-    },
     signout() {
       firebase.auth().signOut();
     }
@@ -106,7 +90,6 @@ export default {
       if (firebaseUser) {
         const currentUser = firebaseUser;
         this.currentUser = currentUser;
-        this.fetchReservations();
         this.loaded = true;
       } else {
         this.loaded = false;
@@ -118,7 +101,13 @@ export default {
 </script>
 
 <style scoped>
-.each_reservation {
-  margin: 10px 0px;
+#content {
+  padding: 0px 10px;
+}
+.profile_key {
+  text-align: left;
+}
+.profile_value {
+  text-align: right;
 }
 </style>

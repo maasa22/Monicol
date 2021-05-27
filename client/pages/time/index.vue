@@ -1,5 +1,6 @@
 <template>
   <div>
+    <h1>予約する</h1>
     <div v-for="date in date_list" :key="date.index">
       <h3>{{ date }}</h3>
       <v-container>
@@ -69,6 +70,8 @@ export default {
   },
   mounted() {
     // 明日以降の予約ができる。 improvement: 前日の21時までにする。
+    let now = new Date();
+    console.log(now);
     for (let i = 1; i < 9; i++) {
       let today = new Date();
       let day = new Date();

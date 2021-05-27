@@ -69,6 +69,11 @@ export default {
           icon: "mdi-chart-bubble",
           title: "予約一覧",
           to: "/reservation"
+        },
+        {
+          icon: "mdi-chart-bubble",
+          title: "プロフィール",
+          to: "/profile"
         }
       ],
       miniVariant: false,
